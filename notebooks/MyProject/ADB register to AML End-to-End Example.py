@@ -1,45 +1,47 @@
 # Databricks notebook source
-# MAGIC %md # Training machine learning models on tabular data: an end-to-end example
-# MAGIC 
-# MAGIC This tutorial covers the following steps:
-# MAGIC - Import data from your local machine into the Databricks File System (DBFS)
-# MAGIC - Visualize the data using Seaborn and matplotlib
-# MAGIC - Run a parallel hyperparameter sweep to train machine learning models on the dataset
-# MAGIC - Explore the results of the hyperparameter sweep with MLflow
-# MAGIC - Register the best performing model in MLflow
-# MAGIC - Apply the registered model to another dataset using a Spark UDF
-# MAGIC - Set up model serving for low-latency requests
-# MAGIC 
-# MAGIC In this example, you build a model to predict the quality of Portugese "Vinho Verde" wine based on the wine's physicochemical properties. 
-# MAGIC 
-# MAGIC The example uses a dataset from the UCI Machine Learning Repository, presented in [*Modeling wine preferences by data mining from physicochemical properties*](https://www.sciencedirect.com/science/article/pii/S0167923609001377?via%3Dihub) [Cortez et al., 2009].
-# MAGIC 
-# MAGIC ## Requirements
-# MAGIC This notebook requires Databricks Runtime for Machine Learning.  
-# MAGIC If you are using Databricks Runtime 7.3 LTS ML or below, you must update the CloudPickle library. To do that, uncomment and run the `%pip install` command in Cmd 2. 
-
-# COMMAND ----------
-
 # This command is only required if you are using a cluster running DBR 7.3 LTS ML or below. 
 #%pip install --upgrade cloudpickle
 
 # COMMAND ----------
 
-# MAGIC %md ## Import data
-# MAGIC   
-# MAGIC In this section, you download a dataset from the web and upload it to Databricks File System (DBFS).
-# MAGIC 
-# MAGIC 1. Navigate to https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/ and download both `winequality-red.csv` and `winequality-white.csv` to your local machine.
-# MAGIC 
-# MAGIC 1. From this Databricks notebook, select **File > Upload data to DBFS...**, and drag these files to the drag-and-drop target to upload them to the Databricks File System (DBFS). 
-# MAGIC 
-# MAGIC     **Note**: if you don't have the **File > Upload data to DBFS...** option, you can load the dataset from the Databricks example datasets. Uncomment and run the last two lines in the following cell.
-# MAGIC 
-# MAGIC 1. Click **Next**. Auto-generated code to load the data appears. Under **Access Files from Notebooks**, select the **pandas** tab. Click **Copy** to copy the example code, and then click **Done**. 
-# MAGIC 
-# MAGIC 1. Create a new cell, then paste in the sample code. It will look similar to the code shown in the following cell. Make these changes:
-# MAGIC   - Pass `sep=';'` to `pd.read_csv`
-# MAGIC   - Change the variable names from `df1` and `df2` to `white_wine` and `red_wine`, as shown in the following cell.
+import mlflow
+import mlflow.pyfunc
+import mlflow.sklearn
+import numpy as np
+import sklearn
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+from mlflow.models.signature import infer_signature
+from mlflow.utils.environment import _mlflow_conda_env
+import cloudpickle
+import time
+
+# COMMAND ----------
+
+# from dotenv import load_dotenv
+from azure.ai.ml import MLClient
+from azure.identity import DefaultAzureCredential
+
+import os
+os.environ['AZURE_CLIENT_ID'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-client-id") 
+os.environ['AZURE_TENANT_ID'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-tenant-id")
+os.environ['AZURE_CLIENT_SECRET'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-client-secret") 
+
+subscription_id =  dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-subscription-id")  
+resource_group =  "aml-dev-main-rg"
+workspace_name =  "aml-dev-main"
+
+
+credential = DefaultAzureCredential()
+# Check if given credential can get token successfully.
+credential.get_token("https://management.azure.com/.default")
+#ml_client = MLClient.from_config(credential, subscription_id, resource_group, workspace_name)
+ml_client = MLClient(
+    credential, subscription_id, resource_group, workspace_name
+)
+azureml_mlflow_uri = ml_client.workspaces.get(ml_client.workspace_name).mlflow_tracking_uri
+print(azureml_mlflow_uri)
+mlflow.set_registry_uri(azureml_mlflow_uri)
 
 # COMMAND ----------
 
@@ -164,18 +166,6 @@ X_val, X_test, y_val, y_test = train_test_split(X_rem, y_rem, test_size=0.5, ran
 
 # COMMAND ----------
 
-import mlflow
-import mlflow.pyfunc
-import mlflow.sklearn
-import numpy as np
-import sklearn
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import roc_auc_score
-from mlflow.models.signature import infer_signature
-from mlflow.utils.environment import _mlflow_conda_env
-import cloudpickle
-import time
-
 # The predict method of sklearn's RandomForestClassifier returns a binary classification (0 or 1). 
 # The following code creates a wrapper function, SklearnModelWrapper, that uses 
 # the predict_proba method to return the probability that the observation belongs to each class. 
@@ -186,6 +176,12 @@ class SklearnModelWrapper(mlflow.pyfunc.PythonModel):
     
   def predict(self, context, model_input):
     return self.model.predict_proba(model_input)[:,1]
+
+# COMMAND ----------
+
+
+
+
 
 # mlflow.start_run creates a new MLflow run to track the performance of this model. 
 # Within the context, you call mlflow.log_param to keep track of the parameters used, and
@@ -256,6 +252,11 @@ client.list_artifacts(run_id=run_id)
 # COMMAND ----------
 
 import os
+
+local_dir = "/dbfs/FileStore/temp/"
+if not os.path.exists(local_dir):
+  os.mkdir(local_dir)
+  
 local_dir = "/dbfs/FileStore/temp/" + run_id
 if not os.path.exists(local_dir):
   os.mkdir(local_dir)
@@ -275,30 +276,7 @@ model_path = 'dbfs:/FileStore/temp/' + run_id + "/random_forest_model"
 
 # COMMAND ----------
 
-# from dotenv import load_dotenv
-from azure.ai.ml import MLClient
-from azure.identity import DefaultAzureCredential
 
-import os
-os.environ['AZURE_CLIENT_ID'] = "66c790b4-6716-4b0b-86f4-96f13e826da2"
-os.environ['AZURE_TENANT_ID'] = "16b3c013-d300-468d-ac64-7eda0820b6d3"
-os.environ['AZURE_CLIENT_SECRET'] = "7aA8Q~fghrXUAeDYkLIrNLqfDl3zfH-fB5Nhhatl"
-
-subscription_id =  "b071bca8-0055-43f9-9ff8-ca9a144c2a6f"
-resource_group =  "aml-dev-main-rg"
-workspace_name =  "aml-dev-main"
-
-
-credential = DefaultAzureCredential()
-# Check if given credential can get token successfully.
-credential.get_token("https://management.azure.com/.default")
-#ml_client = MLClient.from_config(credential, subscription_id, resource_group, workspace_name)
-ml_client = MLClient(
-    credential, subscription_id, resource_group, workspace_name
-)
-azureml_mlflow_uri = ml_client.workspaces.get(ml_client.workspace_name).mlflow_tracking_uri
-print(azureml_mlflow_uri)
-mlflow.set_registry_uri(azureml_mlflow_uri)
 
 # COMMAND ----------
 
@@ -312,7 +290,7 @@ model_info.model_uri
 
 # If you see the error "PERMISSION_DENIED: User does not have any permission level assigned to the registered model", 
 # the cause may be that a model already exists with the name "wine_quality". Try using a different name.
-model_name = "wine_quality"
+model_name = "wine_quality" + dbutils.secrets.get(scope="secretscope", key="env")
 
 from azure.ai.ml.entities import Model
 from azure.ai.ml.constants import AssetTypes
@@ -327,7 +305,7 @@ from azure.ai.ml.constants import AssetTypes
 
 run_model = Model(
     path=model_path,
-    name="titanic_model",
+    name=model_name,
     description="Model created from run.",
     type=AssetTypes.MLFLOW_MODEL,
     tags = [['model_uri:', model_info.model_uri ]]
@@ -337,25 +315,25 @@ model = ml_client.models.create_or_update(run_model)
 
 # COMMAND ----------
 
-from azure.ai.ml.entities import (
-    ManagedOnlineEndpoint,
-    ManagedOnlineDeployment,
-    Model,
-    Environment,
-    CodeConfiguration,
-)
+# from azure.ai.ml.entities import (
+#     ManagedOnlineEndpoint,
+#     ManagedOnlineDeployment,
+#     Model,
+#     Environment,
+#     CodeConfiguration,
+# )
 
-online_endpoint_name = "mmstonexendpoint"
-endpoint = ManagedOnlineEndpoint(
-    name=online_endpoint_name,
-    description="wine online endpoint for mlflow model from databricks",
-    auth_mode="key",
-    tags={"mlflow": "true"},
-)
+# online_endpoint_name = "mmstonexendpoint"
+# endpoint = ManagedOnlineEndpoint(
+#     name=online_endpoint_name,
+#     description="wine online endpoint for mlflow model from databricks",
+#     auth_mode="key",
+#     tags={"mlflow": "true"},
+# )
 
 # COMMAND ----------
 
-ml_client.begin_create_or_update(endpoint)
+# ml_client.begin_create_or_update(endpoint)
 
 # COMMAND ----------
 
