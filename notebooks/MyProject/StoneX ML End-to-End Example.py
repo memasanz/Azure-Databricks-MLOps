@@ -180,7 +180,9 @@ from mlflow.utils.environment import _mlflow_conda_env
 import cloudpickle
 import time
 
-mlflow.set_experiment(experiment_name = '/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example')
+#mlflow.set_experiment(experiment_name = '/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example')
+
+mlflow.set_experiment(experiment_name =	'/MyProject/StoneX ML End-to-End Example')
 
 # COMMAND ----------
 
