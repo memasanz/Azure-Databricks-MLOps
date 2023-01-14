@@ -180,6 +180,12 @@ from mlflow.utils.environment import _mlflow_conda_env
 import cloudpickle
 import time
 
+mlflow.set_experiment(experiment_name = '/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example')
+
+# COMMAND ----------
+
+
+
 # The predict method of sklearn's RandomForestClassifier returns a binary classification (0 or 1). 
 # The following code creates a wrapper function, SklearnModelWrapper, that uses 
 # the predict_proba method to return the probability that the observation belongs to each class. 
