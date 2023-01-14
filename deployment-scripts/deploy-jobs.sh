@@ -168,7 +168,7 @@ find . -type f -name "*" -print0 | while IFS= read -r -d '' file; do
     json="{ \"job_id\" : $jobId }"
     echo "Job JSON (with job id) $json"
     
-    curl -X POST https://$workspaceUrl/api/2.0/jobs/create \
+    curl -X POST https://$workspaceUrl/api/2.0/jobs/run-now \
             -H "Authorization:Bearer $accessToken" \
             -H "X-Databricks-Azure-SP-Management-Token: $managementToken" \
             -H "X-Databricks-Azure-Workspace-Resource-Id: $resourceId" \
