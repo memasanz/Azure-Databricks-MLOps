@@ -20,6 +20,10 @@
 
 # COMMAND ----------
 
+#/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example
+
+# COMMAND ----------
+
 # This command is only required if you are using a cluster running DBR 7.3 LTS ML or below. 
 #%pip install --upgrade cloudpickle
 
@@ -337,25 +341,25 @@ model = ml_client.models.create_or_update(run_model)
 
 # COMMAND ----------
 
-from azure.ai.ml.entities import (
-    ManagedOnlineEndpoint,
-    ManagedOnlineDeployment,
-    Model,
-    Environment,
-    CodeConfiguration,
-)
+# from azure.ai.ml.entities import (
+#     ManagedOnlineEndpoint,
+#     ManagedOnlineDeployment,
+#     Model,
+#     Environment,
+#     CodeConfiguration,
+# )
 
-online_endpoint_name = "mmstonexendpoint"
-endpoint = ManagedOnlineEndpoint(
-    name=online_endpoint_name,
-    description="wine online endpoint for mlflow model from databricks",
-    auth_mode="key",
-    tags={"mlflow": "true"},
-)
+# online_endpoint_name = "mmstonexendpoint"
+# endpoint = ManagedOnlineEndpoint(
+#     name=online_endpoint_name,
+#     description="wine online endpoint for mlflow model from databricks",
+#     auth_mode="key",
+#     tags={"mlflow": "true"},
+# )
 
 # COMMAND ----------
 
-ml_client.begin_create_or_update(endpoint)
+# ml_client.begin_create_or_update(endpoint)
 
 # COMMAND ----------
 
