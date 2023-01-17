@@ -1,4 +1,8 @@
 # Databricks notebook source
+## ADB MLFlow Experiment - registering models to AML for Model Deployment to K8 leveraging Azure Arc
+
+# COMMAND ----------
+
 import pandas as pd
 
 white_wine = pd.read_csv("/dbfs/databricks-datasets/wine-quality/winequality-white.csv", sep=";")
