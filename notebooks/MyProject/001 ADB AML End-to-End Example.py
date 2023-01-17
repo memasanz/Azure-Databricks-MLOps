@@ -1,52 +1,4 @@
 # Databricks notebook source
-# MAGIC %md # Training machine learning models on tabular data: an end-to-end example
-# MAGIC 
-# MAGIC This tutorial covers the following steps:
-# MAGIC - Import data from your local machine into the Databricks File System (DBFS)
-# MAGIC - Visualize the data using Seaborn and matplotlib
-# MAGIC - Run a parallel hyperparameter sweep to train machine learning models on the dataset
-# MAGIC - Explore the results of the hyperparameter sweep with MLflow
-# MAGIC - Register the best performing model in MLflow
-# MAGIC - Apply the registered model to another dataset using a Spark UDF
-# MAGIC - Set up model serving for low-latency requests
-# MAGIC 
-# MAGIC In this example, you build a model to predict the quality of Portugese "Vinho Verde" wine based on the wine's physicochemical properties. 
-# MAGIC 
-# MAGIC The example uses a dataset from the UCI Machine Learning Repository, presented in [*Modeling wine preferences by data mining from physicochemical properties*](https://www.sciencedirect.com/science/article/pii/S0167923609001377?via%3Dihub) [Cortez et al., 2009].
-# MAGIC 
-# MAGIC ## Requirements
-# MAGIC This notebook requires Databricks Runtime for Machine Learning.  
-# MAGIC If you are using Databricks Runtime 7.3 LTS ML or below, you must update the CloudPickle library. To do that, uncomment and run the `%pip install` command in Cmd 2. 
-
-# COMMAND ----------
-
-#/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example
-
-# COMMAND ----------
-
-# This command is only required if you are using a cluster running DBR 7.3 LTS ML or below. 
-#%pip install --upgrade cloudpickle
-
-# COMMAND ----------
-
-# MAGIC %md ## Import data
-# MAGIC   
-# MAGIC In this section, you download a dataset from the web and upload it to Databricks File System (DBFS).
-# MAGIC 
-# MAGIC 1. Navigate to https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/ and download both `winequality-red.csv` and `winequality-white.csv` to your local machine.
-# MAGIC 
-# MAGIC 1. From this Databricks notebook, select **File > Upload data to DBFS...**, and drag these files to the drag-and-drop target to upload them to the Databricks File System (DBFS). 
-# MAGIC 
-# MAGIC     **Note**: if you don't have the **File > Upload data to DBFS...** option, you can load the dataset from the Databricks example datasets. Uncomment and run the last two lines in the following cell.
-# MAGIC 
-# MAGIC 1. Click **Next**. Auto-generated code to load the data appears. Under **Access Files from Notebooks**, select the **pandas** tab. Click **Copy** to copy the example code, and then click **Done**. 
-# MAGIC 
-# MAGIC 1. Create a new cell, then paste in the sample code. It will look similar to the code shown in the following cell. Make these changes:
-# MAGIC   - Pass `sep=';'` to `pd.read_csv`
-# MAGIC   - Change the variable names from `df1` and `df2` to `white_wine` and `red_wine`, as shown in the following cell.
-
-# COMMAND ----------
-
 import pandas as pd
 
 white_wine = pd.read_csv("/dbfs/databricks-datasets/wine-quality/winequality-white.csv", sep=";")
@@ -180,9 +132,9 @@ from mlflow.utils.environment import _mlflow_conda_env
 import cloudpickle
 import time
 
-#mlflow.set_experiment(experiment_name = '/Repos/megan.masanz@microsoft.com/Azure-Databricks-MLOps/notebooks/MyProject/StoneX ML End-to-End Example')
 
-mlflow.set_experiment(experiment_name =	'/MyProject/StoneX ML End-to-End Example')
+
+mlflow.set_experiment(experiment_name =	'/MyProject/001 ADB AML End-to-End Example')
 
 # COMMAND ----------
 
@@ -324,62 +276,20 @@ model_info.model_uri
 
 # If you see the error "PERMISSION_DENIED: User does not have any permission level assigned to the registered model", 
 # the cause may be that a model already exists with the name "wine_quality". Try using a different name.
-model_name = "wine_quality"
+model_name = "wine_quality_" + dbutils.secrets.get(scope="secretscope", key="env") 
 
 from azure.ai.ml.entities import Model
 from azure.ai.ml.constants import AssetTypes
 
-#'dbfs:/FileStore/temp/' + run_id + "/random_forest_model"
-# run_model = Model(
-#     path=f"runs:/{last_run.info.run_id}/model",
-#     name="titanic_model",
-#     description="Model created from run.",
-#     type=AssetTypes.MLFLOW_MODEL 
-# )
-
 run_model = Model(
     path=model_path,
-    name="titanic_model",
+    name=model_name,
     description="Model created from run.",
     type=AssetTypes.MLFLOW_MODEL,
     tags = [['model_uri:', model_info.model_uri ]]
 )
 
 model = ml_client.models.create_or_update(run_model)
-
-# COMMAND ----------
-
-# from azure.ai.ml.entities import (
-#     ManagedOnlineEndpoint,
-#     ManagedOnlineDeployment,
-#     Model,
-#     Environment,
-#     CodeConfiguration,
-# )
-
-# online_endpoint_name = "mmstonexendpoint"
-# endpoint = ManagedOnlineEndpoint(
-#     name=online_endpoint_name,
-#     description="wine online endpoint for mlflow model from databricks",
-#     auth_mode="key",
-#     tags={"mlflow": "true"},
-# )
-
-# COMMAND ----------
-
-# ml_client.begin_create_or_update(endpoint)
-
-# COMMAND ----------
-
-# MAGIC %md You should now see the model in the Models page. To display the Models page, click the Models icon in the left sidebar. 
-# MAGIC 
-# MAGIC Next, transition this model to production and load it into this notebook from Model Registry.
-
-# COMMAND ----------
-
-# MAGIC %md The Models page now shows the model version in stage "Production".
-# MAGIC 
-# MAGIC You can now refer to the model using the path "models:/wine_quality/production".
 
 # COMMAND ----------
 
