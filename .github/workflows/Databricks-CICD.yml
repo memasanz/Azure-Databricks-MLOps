@@ -252,9 +252,9 @@ jobs:
     environment:
         name: Staging
     env:
-      resourceGroupName: 'Databricks-MyProject-MG-QA'
-      databricksWorkspaceName: 'Databricks-MyProject-MG-QA'
-      keyVaultName: 'KeyVault-MyProject7-QA'
+      resourceGroupName: 'adb-stonx-eastus-rg-QA'
+      databricksWorkspaceName: 'adb-stonx-eastus-QA'
+      keyVaultName: 'avk-stonx-eastus-QA'
       NotebookDeploymentPath: '/MyProject'
       GitNotebookPath: 'notebooks/MyProject'
 
