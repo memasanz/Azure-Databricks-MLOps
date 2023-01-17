@@ -280,7 +280,7 @@ model_info.model_uri
 
 # If you see the error "PERMISSION_DENIED: User does not have any permission level assigned to the registered model", 
 # the cause may be that a model already exists with the name "wine_quality". Try using a different name.
-model_name = "wine_quality_" + dbutils.secrets.get(scope="secretscope", key="env") 
+model_name = "demo_wine_quality_" + dbutils.secrets.get(scope="secretscope", key="env") 
 
 from azure.ai.ml.entities import Model
 from azure.ai.ml.constants import AssetTypes
