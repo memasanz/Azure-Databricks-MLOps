@@ -317,22 +317,7 @@ jobs:
         # set this if you will be using PowerShell
         # enable-AzPSSession: true 
 
-    # Deploy Databricks Workspace
-    - name: Deploy ARM Template (Databricks)
-      uses: azure/CLI@v1
-      # if: ${{ github.event.inputs.MODE == 'SKIP FOR TESTING' }}
-      with:
-        inlineScript: |
-          az group create --location 'EastUS2' --name 'Databricks-MyProject-MG-QA'
-          az deployment group create --resource-group 'Databricks-MyProject-MG-QA' --template-file $GITHUB_WORKSPACE/ARM-Templates/azuredeploy.databricks.json --parameters @$GITHUB_WORKSPACE/ARM-Templates/parameters.databricks.json --parameters workspaceName='Databricks-MyProject-MG-QA'
-    # Deploy Azure KeyVault
-    - name: Deploy ARM Template (KeyVault)
-      uses: azure/CLI@v1
-      if: ${{ github.event.inputs.MODE == 'Initialize-KeyVault' }}
-      with:
-        inlineScript: |
-          az group create --location "${{ github.event.inputs.LOCATION }}" --name "${{ env.resourceGroupName }}"
-          az deployment group create --resource-group ${{ env.resourceGroupName }} --template-file $GITHUB_WORKSPACE/ARM-Templates/azuredeploy.keyvault.json --parameters @$GITHUB_WORKSPACE/ARM-Templates/parameters.keyvault.json --parameters keyVaultName="${{ env.keyVaultName }}"
+  
     # Download KeyVault Secrets
     - name: Download KeyVault Secrets
       uses: Azure/get-keyvault-secrets@v1.0
@@ -446,22 +431,6 @@ jobs:
         # set this if you will be using PowerShell
         # enable-AzPSSession: true 
 
-    # Deploy Databricks Workspace
-    - name: Deploy ARM Template (Databricks)
-      uses: azure/CLI@v1
-      # if: ${{ github.event.inputs.MODE == 'SKIP FOR TESTING' }}
-      with:
-        inlineScript: |
-          az group create --location 'EastUS2' --name 'Databricks-MyProject-MG-Prod'
-          az deployment group create --resource-group 'Databricks-MyProject-MG-Prod' --template-file $GITHUB_WORKSPACE/ARM-Templates/azuredeploy.databricks.json --parameters @$GITHUB_WORKSPACE/ARM-Templates/parameters.databricks.json --parameters workspaceName='Databricks-MyProject-MG-Prod'
-    # Deploy Azure KeyVault
-    - name: Deploy ARM Template (KeyVault)
-      uses: azure/CLI@v1
-      if: ${{ github.event.inputs.MODE == 'Initialize-KeyVault' }}
-      with:
-        inlineScript: |
-          az group create --location "${{ github.event.inputs.LOCATION }}" --name "${{ env.resourceGroupName }}"
-          az deployment group create --resource-group ${{ env.resourceGroupName }} --template-file $GITHUB_WORKSPACE/ARM-Templates/azuredeploy.keyvault.json --parameters @$GITHUB_WORKSPACE/ARM-Templates/parameters.keyvault.json --parameters keyVaultName="${{ env.keyVaultName }}"
     # Download KeyVault Secrets
     - name: Download KeyVault Secrets
       uses: Azure/get-keyvault-secrets@v1.0
