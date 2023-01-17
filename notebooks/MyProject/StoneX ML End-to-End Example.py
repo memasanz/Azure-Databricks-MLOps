@@ -292,11 +292,11 @@ from azure.ai.ml import MLClient
 from azure.identity import DefaultAzureCredential
 
 import os
-os.environ['AZURE_CLIENT_ID'] = "66c790b4-6716-4b0b-86f4-96f13e826da2"
-os.environ['AZURE_TENANT_ID'] = "16b3c013-d300-468d-ac64-7eda0820b6d3"
-os.environ['AZURE_CLIENT_SECRET'] = "7aA8Q~fghrXUAeDYkLIrNLqfDl3zfH-fB5Nhhatl"
+os.environ['AZURE_CLIENT_ID'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-client-id") 
+os.environ['AZURE_TENANT_ID'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-tenant-id")
+os.environ['AZURE_CLIENT_SECRET'] = dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-client-secret") 
 
-subscription_id =  "b071bca8-0055-43f9-9ff8-ca9a144c2a6f"
+subscription_id =  dbutils.secrets.get(scope="secretscope", key="databricks-dev-ops-subscription-id")  
 resource_group =  "aml-dev-main-rg"
 workspace_name =  "aml-dev-main"
 
