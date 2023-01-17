@@ -381,9 +381,9 @@ jobs:
     environment:
         name: Prod
     env:
-      resourceGroupName: 'Databricks-MyProject-MG-Prod'
-      databricksWorkspaceName: 'Databricks-MyProject-MG-Prod'
-      keyVaultName: 'KeyVault-MyProject7-Prod'
+      resourceGroupName: 'adb-stonx-eastus-rg-Prod'
+      databricksWorkspaceName: 'adb-stonx-eastus-Prod'
+      keyVaultName: 'avk-stonx-eastus-Prod'
       NotebookDeploymentPath: '/MyProject'
       GitNotebookPath: 'notebooks/MyProject'
 
